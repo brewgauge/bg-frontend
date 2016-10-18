@@ -5,6 +5,7 @@ var Inert = require('inert')
 var Nes = require('nes')
 var Path = require('path')
 var Boom = require('boom')
+var Mqtt = require('mqtt')
 
 var server = new Hapi.Server()
 server.connection({port: '3000'})
@@ -23,9 +24,22 @@ server.register(plugins, (err) => {
   server.start((err) => {
     exitIfErr(err)
 
-    server.subscription('/sensors')
-    setInterval(() => {server.publish('/sensors', {})}, 1000)
-    console.log('server started')
+    // connect to the MQTT Broker
+    const client = mqtt.connect(mqttUrl)
+    client.on('connect', () => {
+      server.subscription('/sensors')
+      client.subscribe('temperature')
+
+      client.on('temperature', (msg) => {
+        console.log(msg)
+      })
+
+      setInterval(() => {
+        server.publish('/sensors', {sensors: []})
+      }, 1000)
+    })
+
+    console.log('server started on port 300-')
   })
 })
 
