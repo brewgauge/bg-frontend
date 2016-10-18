@@ -9,7 +9,7 @@ import {browserHistory, Router, Route, IndexRoute} from 'react-router'
 import {routerReducer, routerMiddleware, syncHistoryWithStore} from 'react-router-redux'
 
 import authReducer from '../reducers/auth'
-import vidiReducer from '../reducers/vidi'
+import sensorReducer from '../reducers/sensor'
 
 import {logout, validateCookie} from '../actions/auth'
 import Shell from '../containers/shell'
@@ -23,19 +23,19 @@ import Profile from '../containers/profile'
 const rootReducer = combineReducers({
   routing: routerReducer,
   auth: authReducer,
-  vidi: vidiReducer
+  sensor: sensorReducer
 })
 
 const buildStore = applyMiddleware(
   thunkMiddleware,
-  routerMiddleware(browserHistory),
-  loggerMiddleware()
+  routerMiddleware(browserHistory)
+  //loggerMiddleware()
 )(createStore)
 
 const initalState = {
   auth: {
     hasError: false,
-    isLoggedIn: false
+    isLoggedIn: true
   }
 }
 
@@ -63,7 +63,7 @@ export default function createRootComponent () {
     <Provider store={store}>
       <Router history={history}>
         <Route path="/" component={Shell}>
-          <IndexRoute component={Overview} onEnter={requireAuth}/>
+          <IndexRoute component={Sensors} onEnter={requireAuth}/>
           <Route path="sensors" component={Sensors}  onEnter={requireAuth}/>
           <Route path="messages" component={Messages}  onEnter={requireAuth}/>
           <Route path="process/:id" component={ProcessById}  onEnter={requireAuth}/>

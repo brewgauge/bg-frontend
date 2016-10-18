@@ -5,7 +5,7 @@ import {connect} from 'react-redux'
 import {Link} from 'react-router'
 import {Panel, PageHeader} from '../components/index'
 import ChartistGraph from 'react-chartist'
-import {subscribe, unsubscribe} from '../actions/vidi'
+import {subscribe, unsubscribe} from '../actions/sensor'
 import _ from 'lodash'
 
 export const ProcessById = React.createClass({
@@ -48,9 +48,9 @@ export const ProcessById = React.createClass({
 })
 
 export default connect((state) => {
-  var vidi = state.vidi
-  var processes = vidi.processes || {data: [null]}
-  var event_loop = vidi.event_loop || {data: [null]}
+  var sensor = state.sensor
+  var processes = sensor.processes || {data: [null]}
+  var event_loop = sensor.event_loop || {data: [null]}
 
   return {
     processes: processes.data,
