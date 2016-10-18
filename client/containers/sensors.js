@@ -5,53 +5,43 @@ import {connect} from 'react-redux'
 import {Link} from 'react-router'
 import {Panel, PageHeader, InfoCell}  from '../components/index'
 import ChartistGraph from 'react-chartist'
-import {subscribe, unsubscribe} from '../actions/vidi'
+import {subscribe, unsubscribe} from '../actions/sensor'
 import _ from 'lodash'
 
 export const Overview = React.createClass({
   componentDidMount () {
-    this.props.dispatch(subscribe('sensors'))
+    this.props.dispatch(subscribe())
   },
 
   componentWillUnmount () {
-    this.props.dispatch(unsubscribe('sensors'))
+    this.props.dispatch(unsubscribe())
   },
 
   render () {
     var sections = []
-    var groups = _.groupBy(this.props.sensors, 'sensor_type')
-    var sortedKeys = _.keys(groups).sort()
+    var data = this.props.sensor
 
-    _.each(sortedKeys, (theKey) => {
-      var group = groups[theKey]
+    _.each(data, (board) => {
+      var proc_sections = []
+      var tag = board.board
+      var key = board.board
 
-      if (group) {
-        var proc_sections = []
-        var data = _.orderBy(group, ['sensor_id'], ['desc'])
-        var count = data.length
-        var tag = ''
-        var key
+      _.each(board.channels, (channel) => {
+        proc_sections.push(makeChannelSections(channel))
+      })
 
-        _.each(data, (message) => {
-          if (message) {
-            tag = message.sensor_type
-            proc_sections.push(makeMessageSections(message))
-          }
-        })
-
-        sections.push(
-          <div key={tag} className="process-group panel">
-            <div className="panel-heading cf">
-              <h3 className="m0 fl-left"><strong>{tag}</strong></h3>
-              <a href="" className="fl-right icon icon-collapse"></a>
-            </div>
-
-            <div className="panel-body">
-              {proc_sections}
-            </div>
+      sections.push(
+        <div key={board.board} className="process-group panel">
+          <div className="panel-heading cf">
+            <h3 className="m0 fl-left"><strong>Board: {tag}</strong></h3>
+            <a href="" className="fl-right icon icon-collapse"></a>
           </div>
-        )
-      }
+
+          <div className="panel-body">
+            {proc_sections}
+          </div>
+        </div>
+      )
     })
 
 
@@ -71,46 +61,44 @@ export const Overview = React.createClass({
 })
 
 export default connect((state) => {
-  var vidi = state.vidi
-  var sensors = vidi.sensors || {data: [null]}
+  var sensor = state.sensor.data
 
   return {
-    sensors: sensors.data
+    sensor: sensor
   }
 })(Overview)
 
-function makeMessageSections (messages) {
-  var section = []
-  var now = messages.latest
+function makeChannelSections (channel) {
+  console.log(channel)
 
   return (
-    <div key={now.sensor_id} className="process-card">
+    <div key={channel.channel} className="process-card">
       <div className="process-heading has-icon">
         <span className="status status-healthy status-small" title="Status: healthy"></span>
-        {`${now.topic}/${now.sensor_id}`}
+        {`Channel: ${channel.channel}`}
       </div>
 
       <div className="row middle-xs process-stats-row no-gutter">
-        <InfoCell title={'UOM'} value={now.uom} />
-        <InfoCell title={'Broker'} value={now.broker_id} />
-        <InfoCell title={'Topic'} value={now.topic} />
+        <InfoCell title={'Type'} value={'Temp'} />
       </div>
 
       <div className="row middle-xs no-gutter">
         <div className="col-xs-12 mt">
           <ChartistGraph
             type={'Line'}
-            data={{labels: messages.series.time, series: [messages.series.value]}}
+            data={{labels: channel.time, series: [channel.temp]}}
             options={{
               fullWidth: true,
-              showArea: false,
+              showArea: true,
               showLine: true,
-              showPoint: false,
+              showPoint: true,
               chartPadding: {right: 30},
-              axisY: {onlyInteger: true},
               axisX: {labelOffset: {x: -15}, labelInterpolationFnc: (val) => {
-                if (_.last(val) == '0') return val
-                else return null
+                var foo = new Date(val)
+
+                console.log(foo)
+
+                return '' + foo.getHours() + ':' + foo.getMinutes() + ':' + foo.getSeconds()
               }},
             }}/>
         </div>

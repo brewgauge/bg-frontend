@@ -27,7 +27,9 @@ export function subscribeSocket (uri, handler, errorHandler) {
   _subscriptions[uri] = handler
 
   getSocket().then((client) => {
-    client.subscribe(uri, handler, errorHandler)
+    client.subscribe(uri, handler, (err) => {
+      console.log(err)
+    })
   })
 }
 

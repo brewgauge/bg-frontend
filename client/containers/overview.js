@@ -5,24 +5,26 @@ import {connect} from 'react-redux'
 import {Link} from 'react-router'
 import {Panel, PageHeader, HealthList} from '../components/index'
 import ChartistGraph from 'react-chartist'
-import {subscribe, unsubscribe} from '../actions/vidi'
+import {subscribe, unsubscribe} from '../actions/sensor'
 import _ from 'lodash'
 
 export const Overview = React.createClass({
   componentDidMount () {
-    this.props.dispatch(subscribe('processes'))
-    this.props.dispatch(subscribe('event_loop'))
+    this.props.dispatch(subscribe())
   },
 
   componentWillUnmount () {
-    this.props.dispatch(unsubscribe('processes'))
-    this.props.dispatch(unsubscribe('event_loop'))
+    this.props.dispatch(unsubscribe())
   },
 
   render () {
     var sections = []
 
-    var groups = _.groupBy(this.props.process_stats, 'tag')
+    const temp = this.props.temperature
+
+    console.log(this.props.temperature)
+
+    var groups = _.groupBy(temp, 'board_id')
     _.each(groups, (group) => {
       if (group) {
         var proc_sections = []
@@ -71,13 +73,8 @@ export const Overview = React.createClass({
 })
 
 export default connect((state) => {
-  var vidi = state.vidi
-  var processes = vidi.processes || {data: [null]}
-  var event_loop = vidi.event_loop || {data: [null]}
-
   return {
-    process_stats: processes.data,
-    event_loop_stats: event_loop.data
+    temperature: state.sensor.data
   }
 })(Overview)
 

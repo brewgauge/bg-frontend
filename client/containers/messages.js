@@ -5,7 +5,7 @@ import {connect} from 'react-redux'
 import {Link} from 'react-router'
 import {Panel, PageHeader, HealthPanel, InfoCell} from '../components/index'
 import ChartistGraph from 'react-chartist'
-import {subscribe, unsubscribe} from '../actions/vidi'
+import {subscribe, unsubscribe} from '../actions/sensor'
 import _ from 'lodash'
 
 export const Overview = React.createClass({
@@ -75,8 +75,8 @@ export const Overview = React.createClass({
 })
 
 export default connect((state) => {
-  var vidi = state.vidi
-  var messages = vidi.messages || {data: [null]}
+  var sensor = state.sensor
+  var messages = sensor.messages || {data: [null]}
 
   return {
     messages: messages.data

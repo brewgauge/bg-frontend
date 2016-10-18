@@ -5,7 +5,8 @@ var Inert = require('inert')
 var Nes = require('nes')
 var Path = require('path')
 var Boom = require('boom')
-var Mqtt = require('mqtt')
+var Domain = require('bg-domain')
+var _ = require('lodash')
 
 var server = new Hapi.Server()
 server.connection({port: '3000'})
@@ -24,22 +25,49 @@ server.register(plugins, (err) => {
   server.start((err) => {
     exitIfErr(err)
 
-    // connect to the MQTT Broker
-    const client = mqtt.connect(mqttUrl)
-    client.on('connect', () => {
-      server.subscription('/sensors')
-      client.subscribe('temperature')
+    var payload = {
+    }
 
-      client.on('temperature', (msg) => {
-        console.log(msg)
+    // connect to the MQTT Broker
+    const domain = new Domain({url: 'mqtt://localhost:3040', topic: 'brewgauge'})
+    domain.on('connect', () => {
+      server.subscription('/api/sensor')
+
+      domain.on('temperature', (msg) => {
+        var channel = msg.channel_id
+        var board = msg.board_id
+
+        payload[board] = payload[board] || {
+          board: board,
+          channels: {}
+        }
+
+        payload[board].channels[channel] = payload[board].channels[channel] || {
+          channel: channel,
+          time: [],
+          temp: []
+        }
+
+        payload[board].channels[channel].time.push(Date.now())
+        payload[board].channels[channel].temp.push(msg.temperature)
+
+        _.each(payload, (board) => {
+          _.each(board.channels, (channel) => {
+            channel.time = _.chunk(channel.time, 60)[0]
+            channel.temp = _.chunk(channel.temp, 60)[0]
+          })
+        })
       })
 
       setInterval(() => {
-        server.publish('/sensors', {sensors: []})
+
+
+        server.publish('/api/sensor', payload)
+        console.log(JSON.stringify(payload, null, 2))
       }, 1000)
     })
 
-    console.log('server started on port 300-')
+    console.log('server started on port 3000')
   })
 })
 

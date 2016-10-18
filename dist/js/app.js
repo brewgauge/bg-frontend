@@ -21350,9 +21350,9 @@
 
 	var _auth2 = _interopRequireDefault(_auth);
 
-	var _vidi = __webpack_require__(296);
+	var _sensor = __webpack_require__(296);
 
-	var _vidi2 = _interopRequireDefault(_vidi);
+	var _sensor2 = _interopRequireDefault(_sensor);
 
 	var _auth3 = __webpack_require__(302);
 
@@ -21389,15 +21389,17 @@
 	var rootReducer = (0, _redux.combineReducers)({
 	  routing: _reactRouterRedux.routerReducer,
 	  auth: _auth2.default,
-	  vidi: _vidi2.default
+	  sensor: _sensor2.default
 	});
 
-	var buildStore = (0, _redux.applyMiddleware)(_reduxThunk2.default, (0, _reactRouterRedux.routerMiddleware)(_reactRouter.browserHistory), (0, _reduxLogger2.default)())(_redux.createStore);
+	var buildStore = (0, _redux.applyMiddleware)(_reduxThunk2.default, (0, _reactRouterRedux.routerMiddleware)(_reactRouter.browserHistory)
+	//loggerMiddleware()
+	)(_redux.createStore);
 
 	var initalState = {
 	  auth: {
 	    hasError: false,
-	    isLoggedIn: false
+	    isLoggedIn: true
 	  }
 	};
 
@@ -21430,7 +21432,7 @@
 	      _react2.default.createElement(
 	        _reactRouter.Route,
 	        { path: '/', component: _shell2.default },
-	        _react2.default.createElement(_reactRouter.IndexRoute, { component: _overview2.default, onEnter: requireAuth }),
+	        _react2.default.createElement(_reactRouter.IndexRoute, { component: _sensors2.default, onEnter: requireAuth }),
 	        _react2.default.createElement(_reactRouter.Route, { path: 'sensors', component: _sensors2.default, onEnter: requireAuth }),
 	        _react2.default.createElement(_reactRouter.Route, { path: 'messages', component: _messages2.default, onEnter: requireAuth }),
 	        _react2.default.createElement(_reactRouter.Route, { path: 'process/:id', component: _process_by_id2.default, onEnter: requireAuth }),
@@ -30605,11 +30607,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.default = vidi;
+	exports.default = sensor;
 
-	var _vidi = __webpack_require__(297);
-
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+	var _sensor = __webpack_require__(297);
 
 	var subState = {
 	  isSubscribing: true,
@@ -30617,45 +30617,31 @@
 	  data: {}
 	};
 
-	function sub() {
+	function sensor() {
 	  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : subState;
 	  var action = arguments[1];
 
 	  switch (action.type) {
-	    case _vidi.VIDI_SUBSCRIBE:
+	    case _sensor.SENSOR_SUBSCRIBE:
 	      return Object.assign({}, state, {
 	        isSubscribing: true,
-	        isSubscribed: false
+	        isSubscribed: false,
+	        data: {}
 	      });
 
-	    case _vidi.VIDI_UPDATE:
+	    case _sensor.SENSOR_UPDATE:
 	      return Object.assign({}, state, {
 	        isSubscribing: false,
 	        isSubscribed: true,
 	        data: action.data
 	      });
 
-	    case _vidi.VIDI_UNSUBSCRIBE:
+	    case _sensor.SENSOR_UNSUBSCRIBE:
 	      return Object.assign({}, state, {
 	        isSubscribing: false,
 	        isSubscribed: false,
 	        data: {}
 	      });
-
-	    default:
-	      return state;
-	  }
-	}
-
-	function vidi() {
-	  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	  var action = arguments[1];
-
-	  switch (action.type) {
-	    case _vidi.VIDI_SUBSCRIBE:
-	    case _vidi.VIDI_UPDATE:
-	    case _vidi.VIDI_UNSUBSCRIBE:
-	      return Object.assign({}, state, _defineProperty({}, action.view, sub(state[action.view], action)));
 
 	    default:
 	      return state;
@@ -30687,7 +30673,7 @@
 	var SENSOR_UPDATE = exports.SENSOR_UPDATE = 'SENSOR_UPDATE';
 	var SENSOR_UNSUBSCRIBE = exports.SENSOR_UNSUBSCRIBE = 'SENSOR_UNSUBSCRIBE';
 
-	function subscribe(metric) {
+	function subscribe() {
 	  return function (dispatch) {
 	    var uri = '/api/sensor';
 
@@ -30699,7 +30685,7 @@
 	  };
 	}
 
-	function unsubscribe(metric) {
+	function unsubscribe() {
 	  return function (dispatch) {
 	    var uri = '/api/sensor';
 
@@ -30754,7 +30740,9 @@
 	  _subscriptions[uri] = handler;
 
 	  getSocket().then(function (client) {
-	    client.subscribe(uri, handler, errorHandler);
+	    client.subscribe(uri, handler, function (err) {
+	      console.log(err);
+	    });
 	  });
 	}
 
@@ -49181,7 +49169,7 @@
 
 	var _reactChartist2 = _interopRequireDefault(_reactChartist);
 
-	var _vidi = __webpack_require__(297);
+	var _sensor = __webpack_require__(297);
 
 	var _lodash = __webpack_require__(301);
 
@@ -49192,19 +49180,21 @@
 	var Overview = exports.Overview = _react2.default.createClass({
 	  displayName: 'Overview',
 	  componentDidMount: function componentDidMount() {
-	    this.props.dispatch((0, _vidi.subscribe)('processes'));
-	    this.props.dispatch((0, _vidi.subscribe)('event_loop'));
+	    this.props.dispatch((0, _sensor.subscribe)());
 	  },
 	  componentWillUnmount: function componentWillUnmount() {
-	    this.props.dispatch((0, _vidi.unsubscribe)('processes'));
-	    this.props.dispatch((0, _vidi.unsubscribe)('event_loop'));
+	    this.props.dispatch((0, _sensor.unsubscribe)());
 	  },
 	  render: function render() {
 	    var _this = this;
 
 	    var sections = [];
 
-	    var groups = _lodash2.default.groupBy(this.props.process_stats, 'tag');
+	    var temp = this.props.temperature;
+
+	    console.log(this.props.temperature);
+
+	    var groups = _lodash2.default.groupBy(temp, 'board_id');
 	    _lodash2.default.each(groups, function (group) {
 	      if (group) {
 	        var proc_sections = [];
@@ -49266,13 +49256,8 @@
 	});
 
 	exports.default = (0, _reactRedux.connect)(function (state) {
-	  var vidi = state.vidi;
-	  var processes = vidi.processes || { data: [null] };
-	  var event_loop = vidi.event_loop || { data: [null] };
-
 	  return {
-	    process_stats: processes.data,
-	    event_loop_stats: event_loop.data
+	    temperature: state.sensor.data
 	  };
 	})(Overview);
 
@@ -53883,7 +53868,7 @@
 
 	var _reactChartist2 = _interopRequireDefault(_reactChartist);
 
-	var _vidi = __webpack_require__(297);
+	var _sensor = __webpack_require__(297);
 
 	var _lodash = __webpack_require__(301);
 
@@ -53894,10 +53879,10 @@
 	var Overview = exports.Overview = _react2.default.createClass({
 	  displayName: 'Overview',
 	  componentDidMount: function componentDidMount() {
-	    this.props.dispatch((0, _vidi.subscribe)('messages'));
+	    this.props.dispatch((0, _sensor.subscribe)('messages'));
 	  },
 	  componentWillUnmount: function componentWillUnmount() {
-	    this.props.dispatch((0, _vidi.unsubscribe)('messages'));
+	    this.props.dispatch((0, _sensor.unsubscribe)('messages'));
 	  },
 	  render: function render() {
 	    var sections = [];
@@ -53969,8 +53954,8 @@
 	});
 
 	exports.default = (0, _reactRedux.connect)(function (state) {
-	  var vidi = state.vidi;
-	  var messages = vidi.messages || { data: [null] };
+	  var sensor = state.sensor;
+	  var messages = sensor.messages || { data: [null] };
 
 	  return {
 	    messages: messages.data
@@ -54047,7 +54032,7 @@
 
 	var _reactChartist2 = _interopRequireDefault(_reactChartist);
 
-	var _vidi = __webpack_require__(297);
+	var _sensor = __webpack_require__(297);
 
 	var _lodash = __webpack_require__(301);
 
@@ -54058,57 +54043,48 @@
 	var Overview = exports.Overview = _react2.default.createClass({
 	  displayName: 'Overview',
 	  componentDidMount: function componentDidMount() {
-	    this.props.dispatch((0, _vidi.subscribe)('sensors'));
+	    this.props.dispatch((0, _sensor.subscribe)());
 	  },
 	  componentWillUnmount: function componentWillUnmount() {
-	    this.props.dispatch((0, _vidi.unsubscribe)('sensors'));
+	    this.props.dispatch((0, _sensor.unsubscribe)());
 	  },
 	  render: function render() {
 	    var sections = [];
-	    var groups = _lodash2.default.groupBy(this.props.sensors, 'sensor_type');
-	    var sortedKeys = _lodash2.default.keys(groups).sort();
+	    var data = this.props.sensor;
 
-	    _lodash2.default.each(sortedKeys, function (theKey) {
-	      var group = groups[theKey];
+	    _lodash2.default.each(data, function (board) {
+	      var proc_sections = [];
+	      var tag = board.board;
+	      var key = board.board;
 
-	      if (group) {
-	        var proc_sections = [];
-	        var data = _lodash2.default.orderBy(group, ['sensor_id'], ['desc']);
-	        var count = data.length;
-	        var tag = '';
-	        var key;
+	      _lodash2.default.each(board.channels, function (channel) {
+	        proc_sections.push(makeChannelSections(channel));
+	      });
 
-	        _lodash2.default.each(data, function (message) {
-	          if (message) {
-	            tag = message.sensor_type;
-	            proc_sections.push(makeMessageSections(message));
-	          }
-	        });
-
-	        sections.push(_react2.default.createElement(
+	      sections.push(_react2.default.createElement(
+	        'div',
+	        { key: board.board, className: 'process-group panel' },
+	        _react2.default.createElement(
 	          'div',
-	          { key: tag, className: 'process-group panel' },
+	          { className: 'panel-heading cf' },
 	          _react2.default.createElement(
-	            'div',
-	            { className: 'panel-heading cf' },
+	            'h3',
+	            { className: 'm0 fl-left' },
 	            _react2.default.createElement(
-	              'h3',
-	              { className: 'm0 fl-left' },
-	              _react2.default.createElement(
-	                'strong',
-	                null,
-	                tag
-	              )
-	            ),
-	            _react2.default.createElement('a', { href: '', className: 'fl-right icon icon-collapse' })
+	              'strong',
+	              null,
+	              'Board: ',
+	              tag
+	            )
 	          ),
-	          _react2.default.createElement(
-	            'div',
-	            { className: 'panel-body' },
-	            proc_sections
-	          )
-	        ));
-	      }
+	          _react2.default.createElement('a', { href: '', className: 'fl-right icon icon-collapse' })
+	        ),
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'panel-body' },
+	          proc_sections
+	        )
+	      ));
 	    });
 
 	    return _react2.default.createElement(
@@ -54129,34 +54105,30 @@
 	});
 
 	exports.default = (0, _reactRedux.connect)(function (state) {
-	  var vidi = state.vidi;
-	  var sensors = vidi.sensors || { data: [null] };
+	  var sensor = state.sensor.data;
 
 	  return {
-	    sensors: sensors.data
+	    sensor: sensor
 	  };
 	})(Overview);
 
 
-	function makeMessageSections(messages) {
-	  var section = [];
-	  var now = messages.latest;
+	function makeChannelSections(channel) {
+	  console.log(channel);
 
 	  return _react2.default.createElement(
 	    'div',
-	    { key: now.sensor_id, className: 'process-card' },
+	    { key: channel.channel, className: 'process-card' },
 	    _react2.default.createElement(
 	      'div',
 	      { className: 'process-heading has-icon' },
 	      _react2.default.createElement('span', { className: 'status status-healthy status-small', title: 'Status: healthy' }),
-	      now.topic + '/' + now.sensor_id
+	      'Channel: ' + channel.channel
 	    ),
 	    _react2.default.createElement(
 	      'div',
 	      { className: 'row middle-xs process-stats-row no-gutter' },
-	      _react2.default.createElement(_index.InfoCell, { title: 'UOM', value: now.uom }),
-	      _react2.default.createElement(_index.InfoCell, { title: 'Broker', value: now.broker_id }),
-	      _react2.default.createElement(_index.InfoCell, { title: 'Topic', value: now.topic })
+	      _react2.default.createElement(_index.InfoCell, { title: 'Type', value: 'Temp' })
 	    ),
 	    _react2.default.createElement(
 	      'div',
@@ -54166,16 +54138,19 @@
 	        { className: 'col-xs-12 mt' },
 	        _react2.default.createElement(_reactChartist2.default, {
 	          type: 'Line',
-	          data: { labels: messages.series.time, series: [messages.series.value] },
+	          data: { labels: channel.time, series: [channel.temp] },
 	          options: {
 	            fullWidth: true,
-	            showArea: false,
+	            showArea: true,
 	            showLine: true,
-	            showPoint: false,
+	            showPoint: true,
 	            chartPadding: { right: 30 },
-	            axisY: { onlyInteger: true },
 	            axisX: { labelOffset: { x: -15 }, labelInterpolationFnc: function labelInterpolationFnc(val) {
-	                if (_lodash2.default.last(val) == '0') return val;else return null;
+	                var foo = new Date(val);
+
+	                console.log(foo);
+
+	                return '' + foo.getHours() + ':' + foo.getMinutes() + ':' + foo.getSeconds();
 	              } }
 	          } })
 	      )
@@ -54208,7 +54183,7 @@
 
 	var _reactChartist2 = _interopRequireDefault(_reactChartist);
 
-	var _vidi = __webpack_require__(297);
+	var _sensor = __webpack_require__(297);
 
 	var _lodash = __webpack_require__(301);
 
@@ -54219,12 +54194,12 @@
 	var ProcessById = exports.ProcessById = _react2.default.createClass({
 	  displayName: 'ProcessById',
 	  componentDidMount: function componentDidMount() {
-	    this.props.dispatch((0, _vidi.subscribe)('processes'));
-	    this.props.dispatch((0, _vidi.subscribe)('event_loop'));
+	    this.props.dispatch((0, _sensor.subscribe)('processes'));
+	    this.props.dispatch((0, _sensor.subscribe)('event_loop'));
 	  },
 	  componentWillUnmount: function componentWillUnmount() {
-	    this.props.dispatch((0, _vidi.unsubscribe)('processes'));
-	    this.props.dispatch((0, _vidi.unsubscribe)('event_loop'));
+	    this.props.dispatch((0, _sensor.unsubscribe)('processes'));
+	    this.props.dispatch((0, _sensor.unsubscribe)('event_loop'));
 	  },
 	  render: function render() {
 	    var body = null;
@@ -54259,9 +54234,9 @@
 	});
 
 	exports.default = (0, _reactRedux.connect)(function (state) {
-	  var vidi = state.vidi;
-	  var processes = vidi.processes || { data: [null] };
-	  var event_loop = vidi.event_loop || { data: [null] };
+	  var sensor = state.sensor;
+	  var processes = sensor.processes || { data: [null] };
+	  var event_loop = sensor.event_loop || { data: [null] };
 
 	  return {
 	    processes: processes.data,
